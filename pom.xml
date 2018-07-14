@@ -41,6 +41,10 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>compile</scope>
@@ -55,14 +59,21 @@
 		</dependency>
 		<!-- DB Rider -->
 
-		<!-- TestContainers PG -->
+		<!-- TestContainers -->
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>1.4.3</version>
+			<version>1.8.1</version>
 			<scope>compile</scope>
 		</dependency>
-		<!-- TestContainers Web -->
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mysql</artifactId>
+			<version>1.8.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<!-- TestContainers -->
 
 	</dependencies>
 
