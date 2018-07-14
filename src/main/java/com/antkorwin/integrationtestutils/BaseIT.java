@@ -1,4 +1,4 @@
-package com.antkorwin.integerationtestutils;
+package com.antkorwin.integrationtestutils;
 
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;

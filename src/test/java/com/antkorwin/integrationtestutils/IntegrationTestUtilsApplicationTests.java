@@ -1,4 +1,4 @@
-package com.antkorwin.integerationtestutils;
+package com.antkorwin.integrationtestutils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,7 +9,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @SpringBootApplication
-public class IntegerationTestUtilsApplicationTests {
+public class IntegrationTestUtilsApplicationTests {
 
 	@Test
 	public void contextLoads() {
