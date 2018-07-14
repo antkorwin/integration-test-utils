@@ -54,7 +54,7 @@
 		<dependency>
 			<groupId>com.github.database-rider</groupId>
 			<artifactId>rider-core</artifactId>
-			<version>1.2.5</version>
+			<version>1.2.8</version>
 			<scope>compile</scope>
 		</dependency>
 		<!-- DB Rider -->

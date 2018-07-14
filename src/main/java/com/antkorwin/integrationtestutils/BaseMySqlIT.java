@@ -4,7 +4,7 @@ import org.springframework.test.context.TestPropertySource;
 
 /**
  * Created on 14.07.2018.
- *
+ * <p>
  * Run an entire application context,
  * with MySQL bindings to making integration tests with docker
  * (by test-containers)
@@ -20,6 +20,11 @@ import org.springframework.test.context.TestPropertySource;
                                   "spring.jpa.hibernate.ddl-auto=create-drop",
                                   "spring.jpa.show-sql=true",
                                   "spring.jpa.properties.hibernate.hbm2ddl.auto=create-drop",
-                                  "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL5Dialect"})
+                                  "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL5Dialect",
+                                  // tracing:
+                                  "spring.jpa.properties.hibernate.type=trace",
+                                  "spring.jpa.properties.hibernate.format_sql=true",
+                                  "spring.jpa.properties.hibernate.use_sql_comments=true",
+                                  "logging.level.org.hibernate.type.descriptor.sql=trace"})
 public class BaseMySqlIT extends BaseIT {
 }
