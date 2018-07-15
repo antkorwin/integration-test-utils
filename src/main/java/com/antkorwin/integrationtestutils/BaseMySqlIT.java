@@ -25,6 +25,8 @@ import org.springframework.test.context.TestPropertySource;
                                   "spring.jpa.properties.hibernate.type=trace",
                                   "spring.jpa.properties.hibernate.format_sql=true",
                                   "spring.jpa.properties.hibernate.use_sql_comments=true",
-                                  "logging.level.org.hibernate.type.descriptor.sql=trace"})
+                                  "logging.level.org.hibernate.type.descriptor.sql=trace",
+                                  // sql assert:
+                                  "spring.jpa.properties.hibernate.session_factory.statement_inspector=com.antkorwin.integrationtestutils.sqltracker.StatementInspectorImpl"})
 public class BaseMySqlIT extends BaseIT {
 }

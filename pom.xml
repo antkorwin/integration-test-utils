@@ -9,7 +9,7 @@
     <packaging>jar</packaging>
 
     <name>integration-test-utils</name>
-    <description>Demo project for Spring Boot</description>
+    <description>Tools for an easy making integration tests</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -61,13 +61,6 @@
             <scope>compile</scope>
         </dependency>
         <!-- DB Rider -->
-
-        <dependency>
-            <groupId>com.vladmihalcea</groupId>
-            <artifactId>db-util</artifactId>
-            <version>1.0.3</version>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- TestContainers -->
         <dependency>
