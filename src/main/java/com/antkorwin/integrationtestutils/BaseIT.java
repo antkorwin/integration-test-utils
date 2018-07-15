@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @RunWith(SpringRunner.class)
 @AutoConfigureMockMvc
-public abstract class BaseIT extends BaseDataBaseRiderIT{
+public abstract class BaseIT extends BaseDataBaseRiderIT {
 
     @Autowired
     protected MockMvc mockMvc;

@@ -12,7 +12,6 @@ import org.springframework.test.context.TestPropertySource;
  * Does not load entire context configuration!
  *
  * @author Korovin Anatoliy
- * @version 1.0
  */
 @TestPropertySource(properties = {"spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver",
                                   "spring.datasource.type=com.zaxxer.hikari.HikariDataSource",

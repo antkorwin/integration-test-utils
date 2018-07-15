@@ -21,32 +21,30 @@ public abstract class BaseDataBaseRiderIT {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private static Connection connection;
+    private Connection instance = null;
 
     @Rule
     public DBUnitRule dbUnitRule = DBUnitRule.instance(() -> {
         // Пока не пофиксили в DatabaseRider'е, боремся руками с connection leak
-        return (connection != null)
-               ? connection
-               : getConnection();
+        return (instance != null) ? instance : getConnectionInst();
     });
 
-    private Connection getConnection() {
+    @Override
+    protected void finalize() throws Throwable {
+        if (instance != null) {
+            instance.close();
+            instance = null;
+        }
+        super.finalize();
+    }
+
+    private Connection getConnectionInst() {
         try {
-            connection = jdbcTemplate.getDataSource().getConnection();
+            instance = jdbcTemplate.getDataSource().getConnection();
         } catch (SQLException e) {
             e.printStackTrace();
             Assertions.fail("Error: get database connection");
         }
-        return connection;
-    }
-
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        if (connection != null) {
-            connection.close();
-            connection = null;
-        }
+        return instance;
     }
 }

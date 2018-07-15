@@ -1,5 +1,6 @@
 package com.antkorwin.integrationtestutils;
 
+
 import org.springframework.test.context.TestPropertySource;
 
 /**
@@ -29,5 +30,5 @@ import org.springframework.test.context.TestPropertySource;
                                   "logging.level.org.hibernate.type.descriptor.sql=trace",
                                   // sql assert:
                                   "spring.jpa.properties.hibernate.session_factory.statement_inspector=com.antkorwin.integrationtestutils.sqltracker.StatementInspectorImpl"})
-public class BasePostgresIT extends BaseIT {
+public abstract class BasePostgresIT extends BaseIT {
 }
