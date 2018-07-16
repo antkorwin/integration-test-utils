@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @RunWith(SpringRunner.class)
 @AutoConfigureMockMvc
-public class MvcRequesterIT {
+public class MvcRequesterITest {
 
     @Autowired
     private MockMvc mockMvc;
