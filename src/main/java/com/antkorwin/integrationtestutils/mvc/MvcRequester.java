@@ -1,13 +1,15 @@
-package com.antkorwin.integrationtestutils;
+package com.antkorwin.integrationtestutils.mvc;
 
 /**
  * Created on 14.11.2017.
  */
 
+import com.antkorwin.integrationtestutils.OAuthRequestPostProcessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,7 +22,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.util.MimeType;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,30 +29,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.fileUpload;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Created on 30.08.2017.
  * хелпер класс для выполнения запросов к mvc Контроллерам
  *
  * @author Sergey Vdovin
+ * @author Korovin Anatoliy
  */
 public class MvcRequester {
-    private final MockMvc mockMvc;
 
     protected final ObjectMapper sendJsonMapper;
     protected final ObjectMapper receiveJsonMapper;
+    private final MockMvc mockMvc;
 
     private MvcRequester(MockMvc mockMvc) {
+
         this.mockMvc = mockMvc;
         this.sendJsonMapper = new ObjectMapper();
         this.receiveJsonMapper = new ObjectMapper();
     }
 
-    private MvcRequester(MockMvc mockMvc, ObjectMapper sendJsonMapper, ObjectMapper receiveJsonMapper) {
+    private MvcRequester(MockMvc mockMvc,
+                         ObjectMapper sendJsonMapper,
+                         ObjectMapper receiveJsonMapper) {
+
         this.mockMvc = mockMvc;
         this.sendJsonMapper = sendJsonMapper;
         this.receiveJsonMapper = receiveJsonMapper;
@@ -75,7 +84,9 @@ public class MvcRequester {
      *
      * @return
      */
-    public static MvcRequester on(MockMvc mockMvc, ObjectMapper objectMapper) {
+    public static MvcRequester on(MockMvc mockMvc,
+                                  ObjectMapper objectMapper) {
+
         return new MvcRequester(mockMvc, objectMapper, objectMapper);
     }
 
@@ -90,7 +101,10 @@ public class MvcRequester {
      *
      * @return
      */
-    public static MvcRequester on(MockMvc mockMvc, ObjectMapper sendJsonMapper, ObjectMapper receiveJsonMapper) {
+    public static MvcRequester on(MockMvc mockMvc,
+                                  ObjectMapper sendJsonMapper,
+                                  ObjectMapper receiveJsonMapper) {
+
         return new MvcRequester(mockMvc, sendJsonMapper, receiveJsonMapper);
     }
 
@@ -122,7 +136,10 @@ public class MvcRequester {
         private final Multimap<String, String> headers;
         private final List<RequestPostProcessor> postProcessors;
 
-        MvcRequestPointed(MockMvc mockMvc, URI uri, ObjectMapper sendJsonMapper, ObjectMapper receiveJsonMapper) {
+        MvcRequestPointed(MockMvc mockMvc,
+                          URI uri,
+                          ObjectMapper sendJsonMapper,
+                          ObjectMapper receiveJsonMapper) {
             this.uri = uri;
             this.mockMvc = mockMvc;
             this.params = ArrayListMultimap.create();
@@ -131,26 +148,6 @@ public class MvcRequester {
             this.receiveJsonMapper = receiveJsonMapper;
             this.headers = ArrayListMultimap.create();
             this.postProcessors = new ArrayList<>();
-        }
-
-        private MockHttpServletRequestBuilder make(Function<URI, MockHttpServletRequestBuilder> builderSupplier) {
-            MockHttpServletRequestBuilder builder = builderSupplier.apply(uri);
-            if (!params.isEmpty()) {
-                params.asMap()
-                      .forEach((key, values) -> values.forEach(value -> builder.param(key, value)));
-            }
-            if (!postProcessors.isEmpty()) {
-                postProcessors.forEach(builder::with);
-            }
-            return builder;
-        }
-
-        private MockHttpServletRequestBuilder makePostWithAuth(String authToken) {
-            return make(MockMvcRequestBuilders::post).header("Authorization", String.format("Bearer %s", authToken));
-        }
-
-        private MockHttpServletRequestBuilder makeGetWithAuth(String authToken) {
-            return make(MockMvcRequestBuilders::get).header("Authorization", String.format("Bearer %s", authToken));
         }
 
         public MvcRequestPointed withParam(String name, Object... values) {
@@ -197,32 +194,13 @@ public class MvcRequester {
         }
 
         /**
-         * проставляем параметры и заголовки в запрос
-         *
-         * @param builder запрос
-         */
-        private MockHttpServletRequestBuilder prepareRequest(MockHttpServletRequestBuilder builder) {
-            if (!params.isEmpty()) {
-                params.asMap().forEach(
-                        (key, values) ->
-                                values.forEach(value -> builder.param(key, value))
-                                      );
-            }
-            if (!headers.isEmpty()) {
-                headers.asMap().forEach(
-                        (key, values) ->
-                                values.forEach(value -> builder.header(key, value)));
-            }
-            return builder;
-        }
-
-        /**
          * Выполинть POST запрос без параметров
          *
          * @throws Exception
          */
         public MvcRequestResult post() throws Exception {
-            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::post)), receiveJsonMapper);
+            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::post)),
+                                        receiveJsonMapper);
         }
 
         /**
@@ -233,11 +211,16 @@ public class MvcRequester {
          *
          * @return
          */
-        public MvcRequestPointed withFile(String fieldName, String originalFileName, MimeType mimeType, byte[] fileData) {
-            this.files.put(fieldName, new MvcRequestFileData(originalFileName, mimeType, fileData));
+        public MvcRequestPointed withFile(String fieldName,
+                                          String originalFileName,
+                                          MimeType mimeType,
+                                          byte[] fileData) {
+
+            this.files.put(fieldName,
+                           new MvcRequestFileData(originalFileName, mimeType, fileData));
+
             return this;
         }
-
 
         /**
          * выполнение загрузки файла
@@ -245,7 +228,8 @@ public class MvcRequester {
          * @throws Exception
          */
         public MvcRequestResult upload() throws Exception {
-            return new MvcRequestResult(this.mockMvc.perform(makeUpload(null)), receiveJsonMapper);
+            return new MvcRequestResult(this.mockMvc.perform(makeUpload(null)),
+                                        receiveJsonMapper);
         }
 
         /**
@@ -254,11 +238,155 @@ public class MvcRequester {
          * @param token токен авторизации
          *
          * @return
-         *
          * @throws Exception
          */
         public MvcRequestResult uploadWithAuth(String token) throws Exception {
-            return new MvcRequestResult(this.mockMvc.perform(makeUpload(token)), receiveJsonMapper);
+            return new MvcRequestResult(this.mockMvc.perform(makeUpload(token)),
+                                        receiveJsonMapper);
+        }
+
+        /**
+         * Выполнить пост запрос, с отправкой объекта в виде JSON
+         *
+         * @param content отправляемый объект
+         */
+        public MvcRequestResult post(Object content) throws Exception {
+            return new MvcRequestResult(
+                    mockMvc.perform(make(MockMvcRequestBuilders::post)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(sendJsonMapper.writeValueAsString(content))),
+                    receiveJsonMapper);
+        }
+
+        /**
+         * Выполнить PUT запрос, с отправкой объекта в виде JSON
+         *
+         * @param content отправляемый объект
+         */
+        public MvcRequestResult put(Object content) throws Exception {
+            return new MvcRequestResult(
+                    mockMvc.perform(make(MockMvcRequestBuilders::put)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(sendJsonMapper.writeValueAsString(content))),
+                    receiveJsonMapper);
+        }
+
+        /**
+         * Выполнить DELETE запрос, с отправкой объекта в виде JSON
+         */
+        public MvcRequestResult delete() throws Exception {
+            return new MvcRequestResult(
+                    mockMvc.perform(make(MockMvcRequestBuilders::put)
+                                            .contentType(MediaType.APPLICATION_JSON)),
+                    receiveJsonMapper);
+        }
+
+        /**
+         * Выполнение пост запроса с авторизацией
+         *
+         * @param content   Объект отправляемый в виде json
+         * @param authToken токен авторизации
+         *
+         * @deprecated вместо этого нужно использовать метод .withOAuth(token:String?) и .post(Content:Object?)
+         */
+        @Deprecated
+        public MvcRequestResult postWithAuth(Object content, String authToken) throws Exception {
+            return new MvcRequestResult(
+                    mockMvc.perform(makePostWithAuth(authToken)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(this.sendJsonMapper.writeValueAsString(content))),
+                    receiveJsonMapper);
+        }
+
+        /**
+         * Выполнение пост запрса с авторизацией и без отправки какого-либо контента.
+         *
+         * @param authToken токен авторизации
+         *
+         * @deprecated вместо этого нужно использовать метод .withOAuth(token:String?) и .post()
+         */
+        @Deprecated
+        public MvcRequestResult postWithAuth(String authToken) throws Exception {
+            return new MvcRequestResult(mockMvc.perform(makePostWithAuth(authToken)),
+                                        receiveJsonMapper);
+        }
+
+        /**
+         * Выполнение гет запроса
+         */
+        public MvcRequestResult get() throws Exception {
+            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::get)),
+                                        receiveJsonMapper);
+        }
+
+        /**
+         * Выполнение гет запроса, с отправкой объекта в виде JSON
+         *
+         * @param content отправляемый объект
+         */
+        public MvcRequestResult get(Object content) throws Exception {
+            return new MvcRequestResult(
+                    mockMvc.perform(make(MockMvcRequestBuilders::get)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(sendJsonMapper.writeValueAsString(content))),
+                    receiveJsonMapper);
+        }
+
+        /**
+         * Выполнение гет запроса с авторизацией
+         *
+         * @deprecated вместо этого нужно использовать метод .withOAuth(token:String?) и .get()
+         */
+        @Deprecated
+        public MvcRequestResult getWithAuth(String authToken) throws Exception {
+            return new MvcRequestResult(mockMvc.perform(makeGetWithAuth(authToken)),
+                                        receiveJsonMapper);
+        }
+
+        private MockHttpServletRequestBuilder make(Function<URI, MockHttpServletRequestBuilder> builderSupplier) {
+
+            MockHttpServletRequestBuilder builder = builderSupplier.apply(uri);
+            if (!params.isEmpty()) {
+                params.asMap()
+                      .forEach((key, values) ->
+                                       values.forEach(value ->
+                                                              builder.param(key, value)));
+            }
+            if (!postProcessors.isEmpty()) {
+                postProcessors.forEach(builder::with);
+            }
+            return builder;
+        }
+
+        private MockHttpServletRequestBuilder makePostWithAuth(String authToken) {
+            return make(MockMvcRequestBuilders::post)
+                    .header("Authorization", String.format("Bearer %s", authToken));
+        }
+
+        private MockHttpServletRequestBuilder makeGetWithAuth(String authToken) {
+            return make(MockMvcRequestBuilders::get)
+                    .header("Authorization", String.format("Bearer %s", authToken));
+        }
+
+        /**
+         * проставляем параметры и заголовки в запрос
+         *
+         * @param builder запрос
+         */
+        private MockHttpServletRequestBuilder prepareRequest(MockHttpServletRequestBuilder builder) {
+            if (!params.isEmpty()) {
+                params.asMap().forEach(
+                        (key, values) ->
+                                values.forEach(value ->
+                                                       builder.param(key, value)));
+            }
+            if (!headers.isEmpty()) {
+                headers.asMap().forEach(
+                        (key, values) ->
+                                values.forEach(value ->
+                                                       builder.header(key, value)));
+            }
+            return builder;
         }
 
         /**
@@ -277,98 +405,13 @@ public class MvcRequester {
                 MvcRequestFileData data = entry.getValue();
                 MockMultipartFile mockMultipartFile = new MockMultipartFile(entry.getKey(),
                                                                             data.getOriginalFileName(),
-                                                                            data.getMimeType() == null ? null
-                                                                                                       : data.getMimeType().toString(),
+                                                                            data.getMimeType() == null
+                                                                            ? null
+                                                                            : data.getMimeType().toString(),
                                                                             data.fileData);
                 builder.file(mockMultipartFile);
             }
             return prepareRequest(builder);
-        }
-
-        /**
-         * Выполнить пост запрос, с отправкой объекта в виде JSON
-         *
-         * @param content отправляемый объект
-         */
-        public MvcRequestResult post(Object content) throws Exception {
-            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::post).contentType(MediaType.APPLICATION_JSON)
-                                                                                          .content(sendJsonMapper.writeValueAsString(content))),
-                                        receiveJsonMapper);
-        }
-
-        /**
-         * Выполнить PUT запрос, с отправкой объекта в виде JSON
-         *
-         * @param content отправляемый объект
-         */
-        public MvcRequestResult put(Object content) throws Exception {
-            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::put).contentType(MediaType.APPLICATION_JSON)
-                                                                                         .content(sendJsonMapper.writeValueAsString(content))),
-                                        receiveJsonMapper);
-        }
-
-        /**
-         * Выполнить DELETE запрос, с отправкой объекта в виде JSON
-         */
-        public MvcRequestResult delete() throws Exception {
-            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::put).contentType(MediaType.APPLICATION_JSON)),
-                                        receiveJsonMapper);
-        }
-
-        /**
-         * Выполнение пост запроса с авторизацией
-         *
-         * @param content   Объект отправляемый в виде json
-         * @param authToken токен авторизации
-         *
-         * @deprecated вместо этого нужно использовать метод .withOAuth(token:String?) и .post(Content:Object?)
-         */
-        @Deprecated
-        public MvcRequestResult postWithAuth(Object content, String authToken) throws Exception {
-            return new MvcRequestResult(mockMvc.perform(makePostWithAuth(authToken).contentType(MediaType.APPLICATION_JSON)
-                                                                                   .content(this.sendJsonMapper.writeValueAsString(content))),
-                                        receiveJsonMapper);
-        }
-
-        /**
-         * Выполнение пост запрса с авторизацией и без отправки какого-либо контента.
-         *
-         * @param authToken токен авторизации
-         *
-         * @deprecated вместо этого нужно использовать метод .withOAuth(token:String?) и .post()
-         */
-        @Deprecated
-        public MvcRequestResult postWithAuth(String authToken) throws Exception {
-            return new MvcRequestResult(mockMvc.perform(makePostWithAuth(authToken)), receiveJsonMapper);
-        }
-
-
-        /**
-         * Выполнение гет запроса
-         */
-        public MvcRequestResult get() throws Exception {
-            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::get)), receiveJsonMapper);
-        }
-
-        /**
-         * Выполнение гет запроса, с отправкой объекта в виде JSON
-         *
-         * @param content отправляемый объект
-         */
-        public MvcRequestResult get(Object content) throws Exception {
-            return new MvcRequestResult(mockMvc.perform(make(MockMvcRequestBuilders::get).contentType(MediaType.APPLICATION_JSON)
-                                                                                         .content(sendJsonMapper.writeValueAsString(content))),
-                                        receiveJsonMapper);
-        }
-
-        /**
-         * Выполнение гет запроса с авторизацией
-         *
-         * @deprecated вместо этого нужно использовать метод .withOAuth(token:String?) и .get()
-         */
-        @Deprecated
-        public MvcRequestResult getWithAuth(String authToken) throws Exception {
-            return new MvcRequestResult(mockMvc.perform(makeGetWithAuth(authToken)), receiveJsonMapper);
         }
 
     }
@@ -391,7 +434,19 @@ public class MvcRequester {
          * @param matcher ассерт выполняемый над результатом запроса
          */
         public MvcRequestResult doExpect(ResultMatcher matcher) throws Exception {
+            resultActions.andDo(print());
             resultActions.andExpect(matcher);
+            return this;
+        }
+
+        /**
+         * check status code of the response
+         *
+         * @param status expected status code
+         */
+        public MvcRequestResult expectStatus(HttpStatus status) throws Exception {
+            resultActions.andDo(print());
+            resultActions.andExpect(status().isOk());
             return this;
         }
 
@@ -403,12 +458,10 @@ public class MvcRequester {
          * @param <ResultType>
          */
         public <ResultType> ResultType doReturn(TypeReference<ResultType> typeReference) throws Exception {
+            resultActions.andDo(print());
             String body = resultActions.andReturn().getResponse().getContentAsString();
-            if (isNotBlank(body)) {
-                return jsonMapper.readValue(body, typeReference);
-            } else {
-                return null;
-            }
+
+            return isBlank(body) ? null : jsonMapper.readValue(body, typeReference);
         }
 
         /**
@@ -417,22 +470,38 @@ public class MvcRequester {
          * @param returnType   тип данных в который необходимо конвертировать JSON
          * @param <ResultType>
          */
-        public <ResultType> ResultType returnAs(Class<ResultType> returnType) throws IOException {
+        public <ResultType> ResultType returnAs(Class<ResultType> returnType) throws Exception {
+            resultActions.andDo(print());
             String body = resultActions.andReturn().getResponse().getContentAsString();
-            if (isNotBlank(body)) {
-                return jsonMapper.readerFor(returnType).readValue(resultActions.andReturn().getResponse().getContentAsString());
-            } else {
-                return null;
-            }
+
+            return isBlank(body) ? null : jsonMapper.readerFor(returnType)
+                                                    .readValue(resultActions.andReturn()
+                                                                            .getResponse()
+                                                                            .getContentAsString());
+        }
+
+        /**
+         * return result as a primitive type
+         *
+         * @param returnType expected type of result
+         */
+        public <ResultType> ResultType returnAsPrimitive(Class<ResultType> returnType) throws Exception {
+            resultActions.andDo(print());
+            String body = resultActions.andReturn().getResponse().getContentAsString();
+            return isBlank(body) ? null : (ResultType) PrimitiveConverter.convertToPrimitive(body, returnType);
         }
     }
 
     public static class MvcRequestFileData {
+
         private final String originalFileName;
         private final byte[] fileData;
         private final MimeType mimeType;
 
-        public MvcRequestFileData(String originalFileName, MimeType mimeType, byte[] fileData) {
+        public MvcRequestFileData(String originalFileName,
+                                  MimeType mimeType,
+                                  byte[] fileData) {
+
             this.originalFileName = originalFileName;
             this.fileData = fileData;
             this.mimeType = mimeType;
